@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FX Positioning — CFTC COT</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 24px; }
+  .card { background: white; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.10); padding: 28px 32px; max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 20px; font-weight: 700; margin: 0 0 4px; color: #1a1a2e; }
+  .sub { font-size: 12px; color: #666; margin-bottom: 18px; }
+  .legend { display: flex; align-items: center; gap: 0; margin-bottom: 16px; font-size: 11px; flex-wrap: wrap; row-gap: 6px; }
+  .seg { width: 52px; height: 15px; display:flex; align-items:center; justify-content:center; color:white; font-weight:600; font-size:9px; }
+  .seg.mid { color: #333; }
+  .seg-label { margin-left: 8px; color: #888; }
+  .legend-diamond { display:flex; align-items:center; gap:6px; margin-left:20px; color:#555; font-size:11px; }
+  .diamond-icon { width:10px; height:10px; background:#555; transform:rotate(45deg); display:inline-block; flex-shrink:0; }
+  .chart-wrap { position: relative; height: 420px; }
+  .note { font-size: 10px; color: #aaa; margin-top: 12px; text-align: right; }
+  #tooltip {
+    display: none; position: fixed; background: white; border: 1px solid #ddd;
+    border-radius: 8px; padding: 12px 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    font-size: 12px; min-width: 200px; z-index: 999; pointer-events: none;
+  }
+  #tooltip h3 { margin: 0 0 8px; font-size: 15px; color: #1a1a2e; }
+  #tooltip table { width: 100%; border-collapse: collapse; }
+  #tooltip td { padding: 3px 0; color: #333; }
+  #tooltip td:last-child { text-align: right; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>FX Speculative Positioning &mdash; CFTC Legacy COT</h1>
+  <div class="sub">Latest data: <b>March 24, 2026</b> &nbsp;|&nbsp; Non-Commercial (speculator) net position &nbsp;|&nbsp; 1-year percentile rank &nbsp;|&nbsp; Sorted most bullish → most bearish</div>
+  <div class="legend">
+    <div class="seg" style="background:#1a7a3c">≥ 70%</div>
+    <div class="seg" style="background:#52ab6e">55–70</div>
+    <div class="seg mid" style="background:#a0a0a0">45–55</div>
+    <div class="seg" style="background:#dc6464">30–45</div>
+    <div class="seg" style="background:#a93226">≤ 30%</div>
+    <span class="seg-label">1-year percentile rank</span>
+    <div class="legend-diamond"><div class="diamond-icon"></div><span>WoW net change (contracts, right axis)</span></div>
+  </div>
+  <div class="chart-wrap"><canvas id="mainChart"></canvas></div>
+  <div class="note">Source: CFTC Commitments of Traders (Legacy). Non-Commercial Net = Long − Short (excl. spreading).</div>
+</div>
+<div id="tooltip">
+  <h3 id="tt-ticker"></h3>
+  <table>
+    <tr><td>Report date</td><td id="tt-date"></td></tr>
+    <tr><td>Net position</td><td id="tt-net"></td></tr>
+    <tr><td>Week change</td><td id="tt-chg"></td></tr>
+    <tr><td>1Y percentile</td><td id="tt-pct"></td></tr>
+  </table>
+</div>
+<script>
+var DETAIL  = [{"ticker":"AUD","pct":100.0,"net":70872,"chg":1811,"date":"2026-03-24"},{"ticker":"CAD","pct":86.8,"net":-1602,"chg":-2488,"date":"2026-03-24"},{"ticker":"BRL","pct":62.3,"net":49248,"chg":-69,"date":"2026-03-24"},{"ticker":"CHF","pct":60.4,"net":-27097,"chg":-1884,"date":"2026-03-24"},{"ticker":"MXN","pct":56.6,"net":74076,"chg":5616,"date":"2026-03-24"},{"ticker":"ZAR","pct":54.7,"net":9563,"chg":-667,"date":"2026-03-24"},{"ticker":"NZD","pct":50.9,"net":-27006,"chg":-3949,"date":"2026-03-24"},{"ticker":"GBP","pct":17.0,"net":-58422,"chg":7093,"date":"2026-03-24"},{"ticker":"JPY","pct":3.8,"net":-62806,"chg":4974,"date":"2026-03-24"},{"ticker":"EUR","pct":1.9,"net":9279,"chg":-11853,"date":"2026-03-24"}];
+var tickers = ["AUD", "CAD", "BRL", "CHF", "MXN", "ZAR", "NZD", "GBP", "JPY", "EUR"];
+var pcts    = [100.0, 86.8, 62.3, 60.4, 56.6, 54.7, 50.9, 17.0, 3.8, 1.9];
+var colors  = ["rgba(26,122,60,1)", "rgba(26,122,60,1)", "rgba(82,171,110,1)", "rgba(82,171,110,1)", "rgba(82,171,110,1)", "rgba(160,160,160,1)", "rgba(160,160,160,1)", "rgba(169,50,38,1)", "rgba(169,50,38,1)", "rgba(169,50,38,1)"];
+
+var chgs    = [1811, -2488, -69, -1884, 5616, -667, -3949, 7093, 4974, -11853];
+var chgColors = chgs.map(function(v) { return v >= 0 ? 'rgba(26,122,60,0.85)' : 'rgba(169,50,38,0.85)'; });
+
+var ctx = document.getElementById('mainChart').getContext('2d');
+var chart = new Chart(ctx, {
+  data: {
+    labels: tickers,
+    datasets: [
+      {
+        type: 'bar',
+        label: '1Y Percentile',
+        data: pcts,
+        backgroundColor: colors,
+        borderWidth: 0,
+        borderRadius: 5,
+        barPercentage: 0.6,
+        categoryPercentage: 0.8,
+        yAxisID: 'y',
+        order: 2,
+      },
+      {
+        type: 'scatter',
+        label: 'WoW Change',
+        data: chgs.map(function(v, i) { return { x: tickers[i], y: v }; }),
+        backgroundColor: chgColors,
+        borderColor: 'white',
+        borderWidth: 2,
+        pointStyle: 'rectRot',
+        pointRadius: 9,
+        pointHoverRadius: 11,
+        yAxisID: 'yChg',
+        order: 1,
+      },
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: {
+      x: {
+        type: 'category',
+        grid: { display: false },
+        ticks: { font: { size: 15, weight: '700' }, color: '#1a1a2e' },
+      },
+      y: {
+        position: 'left',
+        min: 0, max: 108,
+        grid: { color: '#f0f0f0' },
+        ticks: { font: { size: 11 }, callback: function(v) { return v + '%'; }, stepSize: 10 },
+        title: { display: true, text: '1-Year Percentile Rank', font: { size: 12 }, color: '#666' },
+      },
+      yChg: {
+        position: 'right',
+        grid: { display: false },
+        ticks: { font: { size: 11 }, callback: function(v) { return v.toLocaleString(); } },
+        title: { display: true, text: 'WoW Net Change (contracts)', font: { size: 12 }, color: '#555' },
+      },
+    },
+  },
+  plugins: [{
+    id: 'decorations',
+    afterDraw: function(ch) {
+      var yA = ch.scales['y'], xA = ch.scales['x'], c2 = ch.ctx;
+      var y50 = yA.getPixelForValue(50);
+      // 50% dashed line
+      c2.save();
+      c2.beginPath(); c2.moveTo(xA.left, y50); c2.lineTo(xA.right, y50);
+      c2.strokeStyle = '#bbb'; c2.lineWidth = 1.2; c2.setLineDash([5, 4]); c2.stroke();
+      c2.setLineDash([]);
+      c2.font = '10px Segoe UI, Arial'; c2.fillStyle = '#bbb'; c2.textAlign = 'right';
+      c2.fillText('Neutral 50%', xA.right - 4, y50 - 4);
+      // Value labels
+      var meta = ch.getDatasetMeta(0);  // bars
+      meta.data.forEach(function(bar, i) {
+        var val = pcts[i];
+        if (val === null || isNaN(val)) return;
+        c2.font = 'bold 11px Segoe UI, Arial';
+        c2.fillStyle = '#333';
+        c2.textAlign = 'center';
+        c2.fillText(Math.round(val) + '%', bar.x, bar.y - 7);
+      });
+      c2.restore();
+    }
+  }],
+});
+
+var tooltip = document.getElementById('tooltip');
+ctx.canvas.addEventListener('mousemove', function(e) {
+  var pts = chart.getElementsAtEventForMode(e, 'nearest', { intersect: true }, true);
+  if (!pts.length) { tooltip.style.display = 'none'; return; }
+  var i = pts[0].index, r = DETAIL[i];
+  document.getElementById('tt-ticker').textContent = r.ticker;
+  document.getElementById('tt-date').textContent   = r.date;
+  document.getElementById('tt-net').textContent    = r.net.toLocaleString() + ' contracts';
+  var chg = r.chg;
+  document.getElementById('tt-chg').textContent    = (chg >= 0 ? '+' : '') + chg.toLocaleString();
+  document.getElementById('tt-pct').textContent    = isNaN(r.pct) ? 'n/a' : Math.round(r.pct) + '%';
+  tooltip.style.display = 'block';
+  var tx = e.clientX + 16, ty = e.clientY - 20;
+  if (tx + 220 > window.innerWidth) tx = e.clientX - 220;
+  tooltip.style.left = tx + 'px'; tooltip.style.top = ty + 'px';
+});
+ctx.canvas.addEventListener('mouseleave', function() { tooltip.style.display = 'none'; });
+</script>
+</body>
+</html>
