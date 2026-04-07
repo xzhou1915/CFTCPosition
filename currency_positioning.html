@@ -32,7 +32,7 @@
 <body>
 <div class="card">
   <h1>FX Speculative Positioning &mdash; CFTC Legacy COT</h1>
-  <div class="sub">Latest data: <b>March 24, 2026</b> &nbsp;|&nbsp; Non-Commercial (speculator) net position &nbsp;|&nbsp; 1-year percentile rank &nbsp;|&nbsp; Sorted most bullish → most bearish</div>
+  <div class="sub">Latest data: <b>March 31, 2026</b> &nbsp;|&nbsp; Non-Commercial (speculator) net position &nbsp;|&nbsp; 1-year percentile rank &nbsp;|&nbsp; Sorted most bullish → most bearish</div>
   <div class="legend">
     <div class="seg" style="background:#1a7a3c">≥ 70%</div>
     <div class="seg" style="background:#52ab6e">55–70</div>
@@ -55,12 +55,12 @@
   </table>
 </div>
 <script>
-var DETAIL  = [{"ticker":"AUD","pct":100.0,"net":70872,"chg":1811,"date":"2026-03-24"},{"ticker":"CAD","pct":86.8,"net":-1602,"chg":-2488,"date":"2026-03-24"},{"ticker":"BRL","pct":62.3,"net":49248,"chg":-69,"date":"2026-03-24"},{"ticker":"CHF","pct":60.4,"net":-27097,"chg":-1884,"date":"2026-03-24"},{"ticker":"MXN","pct":56.6,"net":74076,"chg":5616,"date":"2026-03-24"},{"ticker":"ZAR","pct":54.7,"net":9563,"chg":-667,"date":"2026-03-24"},{"ticker":"NZD","pct":50.9,"net":-27006,"chg":-3949,"date":"2026-03-24"},{"ticker":"GBP","pct":17.0,"net":-58422,"chg":7093,"date":"2026-03-24"},{"ticker":"JPY","pct":3.8,"net":-62806,"chg":4974,"date":"2026-03-24"},{"ticker":"EUR","pct":1.9,"net":9279,"chg":-11853,"date":"2026-03-24"}];
-var tickers = ["AUD", "CAD", "BRL", "CHF", "MXN", "ZAR", "NZD", "GBP", "JPY", "EUR"];
-var pcts    = [100.0, 86.8, 62.3, 60.4, 56.6, 54.7, 50.9, 17.0, 3.8, 1.9];
-var colors  = ["rgba(26,122,60,1)", "rgba(26,122,60,1)", "rgba(82,171,110,1)", "rgba(82,171,110,1)", "rgba(82,171,110,1)", "rgba(160,160,160,1)", "rgba(160,160,160,1)", "rgba(169,50,38,1)", "rgba(169,50,38,1)", "rgba(169,50,38,1)"];
+var DETAIL  = [{"ticker":"AUD","pct":100.0,"net":81506,"chg":10634,"date":"2026-03-31"},{"ticker":"CAD","pct":83.0,"net":-32684,"chg":-31082,"date":"2026-03-31"},{"ticker":"BRL","pct":73.6,"net":52711,"chg":3463,"date":"2026-03-31"},{"ticker":"NZD","pct":49.1,"net":-28588,"chg":-1582,"date":"2026-03-31"},{"ticker":"ZAR","pct":47.2,"net":8987,"chg":-576,"date":"2026-03-31"},{"ticker":"CHF","pct":41.5,"net":-29871,"chg":-2774,"date":"2026-03-31"},{"ticker":"GBP","pct":22.6,"net":-52665,"chg":5757,"date":"2026-03-31"},{"ticker":"MXN","pct":20.8,"net":57684,"chg":-16392,"date":"2026-03-31"},{"ticker":"EUR","pct":1.9,"net":507,"chg":-8772,"date":"2026-03-31"},{"ticker":"JPY","pct":1.9,"net":-72872,"chg":-10066,"date":"2026-03-31"}];
+var tickers = ["AUD", "CAD", "BRL", "NZD", "ZAR", "CHF", "GBP", "MXN", "EUR", "JPY"];
+var pcts    = [100.0, 83.0, 73.6, 49.1, 47.2, 41.5, 22.6, 20.8, 1.9, 1.9];
+var colors  = ["rgba(26,122,60,1)", "rgba(26,122,60,1)", "rgba(26,122,60,1)", "rgba(160,160,160,1)", "rgba(160,160,160,1)", "rgba(220,100,100,1)", "rgba(169,50,38,1)", "rgba(169,50,38,1)", "rgba(169,50,38,1)", "rgba(169,50,38,1)"];
 
-var chgs    = [1811, -2488, -69, -1884, 5616, -667, -3949, 7093, 4974, -11853];
+var chgs    = [10634, -31082, 3463, -1582, -576, -2774, 5757, -16392, -8772, -10066];
 var chgColors = chgs.map(function(v) { return v >= 0 ? 'rgba(26,122,60,0.85)' : 'rgba(169,50,38,0.85)'; });
 
 var ctx = document.getElementById('mainChart').getContext('2d');
