@@ -2,3 +2,6 @@ __pycache__/
 data/
 *.pyc
 *.py
+*.bat
+*.csv
+*.md
